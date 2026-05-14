@@ -1,0 +1,20 @@
+{
+  "name": "resumeai-ats",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "backend": "cd backend && uvicorn app:app --reload --port 8000",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "vite": "^5.4.19",
+    "vitest": "^2.1.9"
+  },
+  "dependencies": {
+    "chart.js": "^4.5.1",
+    "three": "^0.184.0"
+  }
+}

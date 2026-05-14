@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ResumeAI — ATS Resume Optimizer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <header class="app-header">
+      <div class="logo" id="logo">Resume<span>AI</span></div>
+      <div class="header-actions">
+
+        <span class="developer-tag">Developed by Kalicharan Upadhayay</span>
+        <button type="button" class="btn btn-secondary" id="btnClearData">Clear workspace</button>
+      </div>
+    </header>
+
+    <main class="app-main">
+      <section class="hero-section">
+        <div id="hero-canvas-container" class="hero-canvas"></div>
+        <div class="hero-content">
+          <h1>Intelligent Career <span>Intelligence</span></h1>
+          <p>Optimize your resume, match with live jobs, and land your dream role with AI-powered insights.</p>
+          <div class="product-journey">
+            <div class="journey-step" data-step="1">
+              <div class="step-icon">📤</div>
+              <span>Upload</span>
+            </div>
+            <div class="journey-arrow">→</div>
+            <div class="journey-step" data-step="2">
+              <div class="step-icon">🔍</div>
+              <span>Analyze</span>
+            </div>
+            <div class="journey-arrow">→</div>
+            <div class="journey-step" data-step="3">
+              <div class="step-icon">💼</div>
+              <span>Match</span>
+            </div>
+            <div class="journey-arrow">→</div>
+            <div class="journey-step" data-step="4">
+              <div class="step-icon">👔</div>
+              <span>Tailor</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="dashboard-grid grid-2">
+        <section class="panel" aria-labelledby="upload-title">
+          <h2 id="upload-title">1. Resume</h2>
+          <div
+            class="dropzone"
+            id="dropzone"
+            tabindex="0"
+            role="button"
+            aria-label="Drop resume file or click to browse"
+          >
+            <p><strong>Drop PDF, DOCX, or TXT</strong> (max 5 MB)</p>
+            <p>or click to choose a file</p>
+            <input type="file" id="fileInput" class="sr-only" accept=".pdf,.docx,.txt,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain" />
+          </div>
+          <div class="status-bar" id="uploadStatus" aria-live="polite"></div>
+          <h3 class="sr-only">Extracted preview</h3>
+          <pre class="resume-preview" id="resumePreview" hidden></pre>
+        </section>
+
+        <section class="panel" aria-labelledby="jd-title">
+          <h2 id="jd-title">2. Job description</h2>
+          <div class="jd-url-row">
+            <label class="sr-only" for="jdUrlInput">Job posting URL</label>
+            <input
+              type="url"
+              id="jdUrlInput"
+              class="input input-inline"
+              placeholder="Job URL — fetch works in npm run dev / preview (proxy)"
+            />
+            <button type="button" class="btn btn-secondary" id="btnFetchJd">Fetch URL</button>
+          </div>
+          <label class="sr-only" for="jdInput">Job description text</label>
+          <textarea
+            class="input"
+            id="jdInput"
+            placeholder="Paste the full job description here…"
+          ></textarea>
+          <div style="margin-top: 0.75rem; display: flex; gap: 0.5rem; flex-wrap: wrap">
+            <button type="button" class="btn btn-primary" id="btnAnalyze">Run analysis</button>
+            <button type="button" class="btn btn-secondary" id="btnSaveJd">Save JD to history</button>
+          </div>
+          <div class="status-bar" id="jdStatus" aria-live="polite"></div>
+        </section>
+      </div>
+
+      <nav class="tabs" role="tablist" aria-label="Results views">
+        <button type="button" class="tab active" role="tab" aria-selected="true" data-tab="overview">Overview</button>
+        <button type="button" class="tab" role="tab" aria-selected="false" data-tab="charts">Charts</button>
+        <button type="button" class="tab" role="tab" aria-selected="false" data-tab="suggestions">Suggestions</button>
+        <button type="button" class="tab" role="tab" aria-selected="false" data-tab="analytics">Analytics</button>
+        <button type="button" class="tab" role="tab" aria-selected="false" data-tab="tailor">Auto-tailor</button>
+        <button type="button" class="tab" role="tab" aria-selected="false" data-tab="career">Career AI</button>
+        <button type="button" class="tab" role="tab" aria-selected="false" data-tab="livejobs">Live Jobs</button>
+        <button type="button" class="tab" role="tab" aria-selected="false" data-tab="insights">Career Insights</button>
+        <button type="button" class="tab" role="tab" aria-selected="false" data-tab="history">History</button>
+      </nav>
+
+      <section id="panel-overview" class="tab-panel active" role="tabpanel">
+        <div class="panel">
+          <div class="score-hero">
+            <div class="chart-wrap" style="height: 200px; width: 200px; max-width: 100%">
+              <canvas id="chartGauge" aria-label="Overall ATS score gauge"></canvas>
+            </div>
+            <div>
+              <div class="score-label">Overall ATS score (heuristic)</div>
+              <div class="score-interpret" id="scoreInterpret"></div>
+              <p class="status-bar" id="analysisSummary"></p>
+            </div>
+          </div>
+          <table class="metrics" id="breakdownTable">
+            <thead>
+              <tr>
+                <th>Component</th>
+                <th>Weight</th>
+                <th>Score</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="panel-charts" class="tab-panel" role="tabpanel" hidden>
+        <div class="charts-grid">
+          <div class="panel">
+            <h2>Score breakdown</h2>
+            <div class="chart-wrap tall">
+              <canvas id="chartRadar"></canvas>
+            </div>
+          </div>
+          <div class="panel">
+            <h2>Top JD keywords vs resume</h2>
+            <div class="chart-wrap tall">
+              <canvas id="chartKeywords"></canvas>
+            </div>
+          </div>
+          <div class="panel">
+            <h2>Keyword gap map</h2>
+            <div class="chart-wrap tall">
+              <canvas id="chartKeywordGap"></canvas>
+            </div>
+            <div id="keywordGapLegend" class="gap-legend"></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="panel-suggestions" class="tab-panel" role="tabpanel" hidden>
+        <div class="panel">
+          <h2>Job suggestions</h2>
+          <div id="jobSuggestions" class="job-suggestions"></div>
+        </div>
+        <div class="panel">
+          <h2>Recommendations</h2>
+          <p class="status-bar" id="suggestionsHint"></p>
+          <ul class="suggestions-list" id="suggestionsList"></ul>
+          <div style="margin-top: 1rem; display: flex; gap: 0.5rem; flex-wrap: wrap">
+            <button type="button" class="btn btn-primary" id="btnAiSuggestions">Generate AI suggestions</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="panel-analytics" class="tab-panel" role="tabpanel" hidden>
+        <div class="charts-grid">
+          <div class="panel">
+            <h2>Readability analysis</h2>
+            <div id="readabilityMetrics" class="metrics-grid">
+              <div class="metric-card">
+                <span class="metric-label">Flesch-Kincaid</span>
+                <span class="metric-value" id="fleschScore">--</span>
+              </div>
+              <div class="metric-card">
+                <span class="metric-label">Avg sentence length</span>
+                <span class="metric-value" id="avgSentenceLength">--</span>
+              </div>
+            </div>
+            <p class="status-bar" id="readabilityInterpret"></p>
+          </div>
+          <div class="panel">
+            <h2>Competitive benchmarking</h2>
+            <div class="chart-wrap">
+              <canvas id="chartBenchmark"></canvas>
+            </div>
+            <p class="status-bar" id="benchmarkSummary"></p>
+          </div>
+          <div class="panel">
+            <h2>Keyword density</h2>
+            <div class="chart-wrap">
+              <canvas id="chartDensity"></canvas>
+            </div>
+          </div>
+          <div class="panel">
+            <h2>Format compliance</h2>
+            <ul class="checklist" id="formatChecklist"></ul>
+          </div>
+        </div>
+      </section>
+
+      <section id="panel-tailor" class="tab-panel" role="tabpanel" hidden>
+        <div class="panel">
+          <h2>Auto-tailor (plain text)</h2>
+          <p class="status-bar">
+            Produces an ATS-oriented plain-text resume aligned to the JD. Review for accuracy before
+            sending anywhere.
+          </p>
+          <div id="tailorMeta" class="tailor-meta"></div>
+          <button type="button" class="btn btn-primary" id="btnTailor">Run auto-tailor</button>
+          <div class="tailor-output">
+            <label class="sr-only" for="tailoredResume">Tailored resume</label>
+            <textarea class="input" id="tailoredResume" readonly placeholder="Tailored resume appears here…"></textarea>
+            <div style="margin-top: 0.75rem; display: flex; gap: 0.5rem; flex-wrap: wrap">
+              <button type="button" class="btn btn-secondary" id="btnCopyTailored">Copy text</button>
+              <button type="button" class="btn btn-secondary" id="btnExportPdf">Download PDF</button>
+            </div>
+            <div class="status-bar" id="tailorStatus" aria-live="polite"></div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+      <section id="panel-career" class="tab-panel" role="tabpanel" hidden>
+        <div class="charts-grid">
+          <div class="panel">
+            <h2>LinkedIn Optimizer</h2>
+            <p class="status-bar">Craft a professional LinkedIn 'About' section.</p>
+            <button type="button" class="btn btn-secondary" id="btnOptimizeLinkedIn">Generate Summary</button>
+            <textarea class="input" id="linkedinOutput" readonly placeholder="LinkedIn summary will appear here..."></textarea>
+          </div>
+          <div class="panel">
+            <h2>Interview Prep</h2>
+            <p class="status-bar">Questions tailored to your resume and the JD.</p>
+            <button type="button" class="btn btn-secondary" id="btnGenQuestions">Generate Questions</button>
+            <div id="interviewQuestions" class="status-bar" style="max-height: 200px; overflow-y: auto; background: var(--bg); padding: 0.5rem; border-radius: 8px;"></div>
+          </div>
+          <div class="panel">
+            <h2>Project Enhancer</h2>
+            <textarea class="input" id="projectInput" placeholder="Paste a project description to enhance it using the STAR/XYZ formula..."></textarea>
+            <button type="button" class="btn btn-secondary" id="btnEnhanceProjects" style="margin-top: 0.5rem">Enhance Bullets</button>
+            <div id="enhancedProjects" class="status-bar" style="margin-top: 0.5rem"></div>
+          </div>
+          <div class="panel">
+            <h2>Cover Letter</h2>
+            <p class="status-bar">A high-converting letter for this specific role.</p>
+            <button type="button" class="btn btn-primary" id="btnGenerateCoverLetter">Generate Letter</button>
+            <textarea class="input" id="coverLetterText" readonly placeholder="Cover letter will appear here..."></textarea>
+            <button type="button" class="btn btn-secondary" id="btnCopyCoverLetter" style="margin-top: 0.5rem">Copy text</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="panel-livejobs" class="tab-panel" role="tabpanel" hidden>
+        <div class="panel">
+          <h2>Recommended Jobs For You</h2>
+          <p class="status-bar">Live job matches based on your resume profile and skills.</p>
+          <div class="jd-url-row">
+            <select id="jobLocation" class="input input-inline" style="max-width: 120px;">
+              <option value="us">USA</option>
+              <option value="gb">UK</option>
+              <option value="in">India</option>
+              <option value="ca">Canada</option>
+            </select>
+            <button type="button" class="btn btn-primary" id="btnFetchLiveJobs">Find Matching Jobs</button>
+          </div>
+          <div id="liveJobsList" class="jobs-grid">
+            <p class="status-bar">Upload a resume and click "Find Matching Jobs" to see live recommendations.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="panel-insights" class="tab-panel" role="tabpanel" hidden>
+        <div class="panel">
+          <h2>Career Insights & Market Trends</h2>
+          <p class="status-bar">Latest tech hiring news and career growth tips.</p>
+          <div id="newsFeed" class="news-grid">
+            <p class="status-bar">Fetching latest career insights...</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="panel-history" class="tab-panel" role="tabpanel" hidden>
+        <div class="panel">
+          <h2>Analysis history</h2>
+          <p class="status-bar">Recent resume analyses stored in the database.</p>
+          <div class="history-list" id="historyList">
+            <p class="status-bar">No history yet. Run an analysis to see it here.</p>
+          </div>
+        </div>
+      </section>
+
+      <footer class="app-footer">
+      <div class="footer-content">
+        <p>ResumeAI — Smart Career Intelligence Platform</p>
+        <p class="branding-signature">Developed with ❤️ by Kalicharan Upadhayay</p>
+      </div>
+    </footer>
+
+    <aside class="chat-widget" id="chatWidget" aria-label="Resume assistant chat">
+      <div class="chat-head" id="chatToggle">
+        <strong>Resume assistant</strong>
+        <span id="chatChevron">▼</span>
+      </div>
+      <div class="quick-actions" id="quickActions"></div>
+      <div class="chat-body" id="chatBody"></div>
+      <div class="typing" id="chatTyping" hidden>Assistant is typing…</div>
+      <div class="chat-input-row">
+        <label class="sr-only" for="chatInput">Message</label>
+        <input type="text" id="chatInput" placeholder="Ask about your score or keywords…" />
+        <button type="button" class="btn btn-primary" id="chatSend">Send</button>
+      </div>
+    </aside>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
