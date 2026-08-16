@@ -26,6 +26,7 @@ class ChatRequest(BaseModel):
     message: str
     resume_text: str
     jd_text: str
+    score: Optional[float] = None
     history: Optional[List[ChatMessage]] = None
 
 class SuggestionsRequest(BaseModel):
