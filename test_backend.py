@@ -4,7 +4,7 @@ import requests
 import json
 import sys
 
-BASE_URL = "http://127.0.0.1:8000"
+BASE_URL = "http://localhost:8000"
 TEST_RESUME = """
 John Doe
 john.doe@example.com | (555) 123-4567

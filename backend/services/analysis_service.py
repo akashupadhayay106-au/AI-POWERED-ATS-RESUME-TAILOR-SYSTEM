@@ -30,31 +30,59 @@ class AnalysisService:
             return float(numerator) / denominator
 
     def analyze(self, resume_text: str, jd_text: str) -> Dict[str, Any]:
-        jd_keywords = self.extract_keywords(jd_text, top_n=40)
+        # 0. Preprocessing
+        resume_clean = normalize_text(resume_text)
+        jd_clean = normalize_text(jd_text)
+        
+        jd_keywords = self.extract_keywords(jd_text, top_n=50)
         resume_tokens = set(tokenize(resume_text))
         
         matched = [kw for kw in jd_keywords if kw in resume_tokens]
         missing = [kw for kw in jd_keywords if kw not in resume_tokens]
         
-        keyword_score = (len(matched) / len(jd_keywords) * 100) if jd_keywords else 0
+        # 1. Keyword Coverage (25%) - Increased weight
+        keyword_score = (len(matched) / len(jd_keywords) * 100) if jd_keywords else 100.0
+        
+        # 2. Semantic Relevance (25%) - Increased weight
         similarity = self.calculate_cosine_similarity(resume_text, jd_text) * 100
         
-        # Heuristic components
-        format_score = 90.0 # Placeholder
+        # 3. Format & Readability (10%)
+        format_score = 100.0
         if "\t" in resume_text: format_score -= 10
+        if len(resume_text) < 500: format_score -= 20 # Too short
+        if len(resume_text) > 10000: format_score -= 10 # Too long
         
+        readability = compute_readability(resume_text)
+        readability_score = readability["score"]
+        
+        # 4. Section Completeness (10%)
         section_score = 0
-        for s in ["experience", "education", "skills", "summary"]:
-            if s in resume_text.lower(): section_score += 25
-            
-        overall = (keyword_score * 0.4) + (similarity * 0.3) + (section_score * 0.2) + (format_score * 0.1)
+        standard_sections = ["experience", "education", "skills", "summary", "projects", "certifications", "contact"]
+        for s in standard_sections:
+            if s in resume_text.lower(): section_score += (100 / len(standard_sections))
+        section_score = min(100, section_score)
+
+        # 5. Role Alignment (15%)
+        jd_intel = intelligence_service.classify_jd_skills(jd_text)
+        role_alignment_score = intelligence_service.get_role_alignment_score(resume_text, jd_intel)
+        
+        # 6. Bullet Impact (15%)
+        unique_weak_bullets = intelligence_service.detect_weak_bullets(resume_text)
+        total_bullets = len([l for l in resume_text.splitlines() if l.strip().startswith(('•', '-', '*', '√')) or len(l.strip()) > 50])
+        bullet_score = intelligence_service.get_bullet_score(unique_weak_bullets, total_bullets)
+
+        # Final Weighted Overall Score
+        overall = (
+            (keyword_score * 0.25) + 
+            (similarity * 0.25) + 
+            (format_score * 0.10) + 
+            (readability_score * 0.05) +
+            (section_score * 0.10) + 
+            (role_alignment_score * 0.15) +
+            (bullet_score * 0.10)
+        )
         
         fit = intelligence_service.get_role_fit(overall)
-        readability = compute_readability(resume_text)
-        
-        # New Intelligence Modules
-        weak_bullets = intelligence_service.detect_weak_bullets(resume_text)
-        jd_intel = intelligence_service.classify_jd_skills(jd_text)
         
         return {
             "overall": round(overall, 1),
@@ -62,16 +90,18 @@ class AnalysisService:
             "breakdown": {
                 "keyword": round(keyword_score, 1),
                 "similarity": round(similarity, 1),
-                "sections": section_score,
-                "format": format_score,
-                "readability": readability["score"]
+                "sections": round(section_score, 1),
+                "format": round(format_score, 1),
+                "readability": round(readability_score, 1),
+                "role_alignment": round(role_alignment_score, 1),
+                "bullet_impact": round(bullet_score, 1)
             },
             "matchedKeywords": matched,
             "missingKeywords": missing,
             "jd": {"keywords": jd_keywords},
             "fit_prediction": fit,
-            "explanation": f"Your resume matches {len(matched)} key terms and has a {round(similarity)}% semantic alignment with the role.",
-            "weak_bullets": weak_bullets,
+            "explanation": f"Your resume matches {len(matched)} key terms and has a {round(similarity)}% semantic alignment. We identified {len(unique_weak_bullets)} areas for bullet improvement.",
+            "weak_bullets": unique_weak_bullets,
             "jd_intelligence": jd_intel
         }
 
